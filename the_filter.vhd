@@ -121,31 +121,11 @@ architecture bilinear_behavior of bilinear_interpolation is
 
 begin
 -- I/O signal assignments 
-	DATA_OUT_PORT <= std_logic_vector(data_out);
 	data_in <= unsigned(DATA_IN_PORT); 
 	FILTER_DATA_VALID <= data_available; 
 	FILTER_READY_4DATA <= ready_for_data;
 
--- Asynchronous reset 
-	process(rst) 
-	begin 
-		if rst='0' then 
-			data_out <= (others => '0');
-			data_available <= '0'; 
-			ready_for_data <= '1'; 
-			lines_input <= 0;
-			pixels_input <= 0; 
-			calculated_lines <= 0; 
-			calculated_pixels <= 0; 
-			total_output_counter <= 0; 
-			state <= Idle; 
-			for i in two_lines'range loop 
-				two_lines(i) <= (others => '0');
-			end loop; 
-		end if; 
-	end process; 
-   
- 
+
 -- Main process starts here: 
 	process(clk, rst) 
 		variable calculated_output_pixel : integer := 0; 
@@ -156,13 +136,19 @@ begin
 			case state is
 			when Idle =>
 				if run='1' then 
-					next_state <= Loading; 
 					data_available <= '0'; 
-					ready_for_data <= '1'; 
+                    ready_for_data <= '1'; 
+                    lines_input <= 0;
+                    pixels_input <= 0; 
+                    calculated_lines <= 0; 
+                    calculated_pixels <= 0; 
+                    total_output_counter <= 0;  
 				else
 					next_state <= Idle; 
+					data_available <= '0';
+					ready_for_data <= '0'; 
 				end if;
-				data_out <= (others => '0'); 
+				
 ----------------------------------------------------------------------------------------------
 			when Loading =>
 			-- First determine if the total number of outputs is the new image size
@@ -189,8 +175,9 @@ begin
 					data_available <= '0'; 
 					ready_for_data <= '1'; 
 				end if; 
+				data_out <= (others => '0'); -- blank output data before line buffers load	
 			end if;   
-			data_out <= (others => '0'); -- blank output data before line buffers load	
+			
 ----------------------------------------------------------------------------------------------
 			when Calculating => 
 			-- Pass this function the current pixel counter and the loaded buffer
@@ -218,7 +205,6 @@ begin
 ----------------------------------------------------------------------------------------------
         	when Done =>
 			-- do a reset on all signals and go idle 
-				data_out <= (others => '0');
 				data_available <= '0'; 
 				ready_for_data <= '1'; 
 				lines_input <= 0;
