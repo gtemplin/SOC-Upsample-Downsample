@@ -47,7 +47,7 @@ architecture bilinear_behavior of bilinear_interpolation is
 	-- pass this function the # of pixels output when using this two-line buffer for calculations 
 	-- it will return a pixel value estimate based on where you are 
 	-- ensure that the output counter is incremented after calling it 
-	function get_output_pixel(output_counter : integer; pixel_buffer : two_line_buffer) return integer is 
+	impure function get_output_pixel(output_counter : integer; pixel_buffer : two_line_buffer) return integer is 
 		variable top_line_original, bottom_line_original : one_line_buffer;
 		-- variables to help find the closest pixels in the original 
 		variable output_line_counter : integer;
@@ -66,10 +66,14 @@ architecture bilinear_behavior of bilinear_interpolation is
 	begin 
 		-- get the top/bottom lines from the two-line buffer 
 		for i in 0 to OLD_WIDTH - 1 loop
-            bottom_line_original(i) := two_lines(i);
+		    for j in 7 downto 0 loop 
+		        bottom_line_original(i)(j) := two_lines(i)(j);
+		    end loop; 
         end loop;       
         for i in 0 to OLD_WIDTH - 1 loop
-            top_line_original(i) := two_lines(i + OLD_WIDTH);
+            for j in 7 downto 0 loop 
+		        bottom_line_original(i)(j) := two_lines(i + OLD_WIDTH)(j);
+		    end loop;
         end loop;
 
 		-- determine which new output line you are on 
